@@ -1,6 +1,6 @@
 """
 SignLanguageAI
-Version 0.6.0
+Version 0.7.2
 
 Professional User Interface
 """
@@ -153,6 +153,7 @@ class UI:
             f"    Resolution : {resolution}"
 
         )
+                # Left Header
 
         cv2.putText(
 
@@ -160,7 +161,7 @@ class UI:
 
             left_text,
 
-            (15, 31),
+            (20, 31),
 
             cv2.FONT_HERSHEY_SIMPLEX,
 
@@ -171,6 +172,8 @@ class UI:
             2
 
         )
+
+        # Right Header
 
         text_size = cv2.getTextSize(
 
@@ -210,6 +213,7 @@ class UI:
 
         return frame
 
+        
     # ======================================================
     # Bottom Panel
     # ======================================================
@@ -293,13 +297,13 @@ class UI:
 
             frame,
 
-            "DATASET",
+            "DATASET COLLECTION",
 
             (20, panel_top + 28),
 
             cv2.FONT_HERSHEY_SIMPLEX,
 
-            0.72,
+            0.60,
 
             self.CYAN,
 
@@ -307,78 +311,38 @@ class UI:
 
         )
 
+        # ----------------------------------------------
+        # Current Label (supports long command names)
+        # ----------------------------------------------
+
+        display_label = current_label
+
+        font_scale = 0.62
+
+        if len(display_label) > 8:
+
+            font_scale = 0.48
+
+        elif len(display_label) > 5:
+
+            font_scale = 0.55
+
         cv2.putText(
 
             frame,
 
-            f"Letter : {current_label}",
+            f"Label : {display_label}",
 
             (20, panel_top + 60),
 
             cv2.FONT_HERSHEY_SIMPLEX,
 
-            0.62,
+            font_scale,
 
             self.WHITE,
 
             2
-
         )
-
-        cv2.putText(
-
-            frame,
-
-            f"Collected : {current_count}/{target_count}",
-
-            (20, panel_top + 92),
-
-            cv2.FONT_HERSHEY_SIMPLEX,
-
-            0.62,
-
-            self.WHITE,
-
-            2
-
-        )
-
-        cv2.putText(
-
-            frame,
-
-            f"Remaining : {remaining}",
-
-            (20, panel_top + 124),
-
-            cv2.FONT_HERSHEY_SIMPLEX,
-
-            0.62,
-
-            self.WHITE,
-
-            2
-
-        )
-
-        cv2.putText(
-
-            frame,
-
-            f"Session : {session_count}",
-
-            (20, panel_top + 156),
-
-            cv2.FONT_HERSHEY_SIMPLEX,
-
-            0.62,
-
-            self.WHITE,
-
-            2
-
-        )
-
         return frame
 
     # ======================================================
@@ -926,7 +890,53 @@ class UI:
         )
 
         return frame
-        # ======================================================
+    
+    # ======================================================
+    # Dynamic Recording Panel
+    # ======================================================
+
+    def draw_dynamic_panel(
+        self,
+        frame,
+        dynamic_label="-",
+        dynamic_frames=0,
+        dynamic_target=20,
+        dynamic_recording=False,
+        dynamic_collected=0,
+        dynamic_goal=150,
+        dynamic_j_count=0,
+        dynamic_z_count=0
+    ):
+        h, w = frame.shape[:2]
+        panel_top = h - 180
+        x = 20
+        y = panel_top + 95
+
+        cv2.putText(frame,"DYNAMIC",(x,y),cv2.FONT_HERSHEY_SIMPLEX,0.6,self.ORANGE,2)
+        cv2.putText(frame,f"Label : {dynamic_label}",(x,y+28),cv2.FONT_HERSHEY_SIMPLEX,0.55,self.WHITE,2)
+        cv2.putText(frame,f"Frames : {dynamic_frames}/{dynamic_target}",(x,y+56),cv2.FONT_HERSHEY_SIMPLEX,0.55,self.WHITE,2)
+        cv2.putText(frame,f"Collected : {dynamic_collected}/{dynamic_goal}",(x,y+84),cv2.FONT_HERSHEY_SIMPLEX,0.55,self.GREEN,2)
+        cv2.putText(frame,f"Remaining : {max(dynamic_goal-dynamic_collected,0)}",(x,y+112),cv2.FONT_HERSHEY_SIMPLEX,0.55,self.YELLOW,2)
+        cv2.putText(frame,f"J:{dynamic_j_count}   Z:{dynamic_z_count}",(x,y+140),cv2.FONT_HERSHEY_SIMPLEX,0.55,self.CYAN,2)
+
+        bx=x+180; by=y+40; bw=180; bh=16
+        cv2.rectangle(frame,(bx,by),(bx+bw,by+bh),self.PROGRESS_BG,-1)
+        fill=int((dynamic_frames/max(dynamic_target,1))*bw)
+        cv2.rectangle(frame,(bx,by),(bx+fill,by+bh),self.ORANGE,-1)
+        cv2.rectangle(frame,(bx,by),(bx+bw,by+bh),self.WHITE,1)
+
+        bx2=bx; by2=y+92
+        cv2.rectangle(frame,(bx2,by2),(bx2+bw,by2+bh),self.PROGRESS_BG,-1)
+        fill2=int((dynamic_collected/max(dynamic_goal,1))*bw)
+        cv2.rectangle(frame,(bx2,by2),(bx2+fill2,by2+bh),self.GREEN,-1)
+        cv2.rectangle(frame,(bx2,by2),(bx2+bw,by2+bh),self.WHITE,1)
+
+        status="REC" if dynamic_recording else "IDLE"
+        color=self.RED if dynamic_recording else self.LIGHT_GRAY
+        cv2.putText(frame,status,(bx+bw+10,by+14),cv2.FONT_HERSHEY_SIMPLEX,0.5,color,2)
+        return frame
+
+    # ======================================================
     # Main Draw Function
     # ======================================================
 
@@ -966,7 +976,11 @@ class UI:
 
         status="Ready",
 
-        session_count=0
+        session_count=0,
+        dynamic_label='-',
+        dynamic_frames=0,
+        dynamic_target=20,
+        dynamic_recording=False
 
     ):
 
@@ -1090,6 +1104,18 @@ class UI:
             letter_added,
 
             last_added_letter
+        )
+
+        frame = self.draw_dynamic_panel(
+            frame,
+            dynamic_label,
+            dynamic_frames,
+            dynamic_target,
+            dynamic_recording,
+            dynamic_collected,
+            dynamic_goal,
+            dynamic_j_count,
+            dynamic_z_count
         )
 
         # ------------------------------------------

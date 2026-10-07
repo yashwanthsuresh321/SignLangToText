@@ -15,7 +15,8 @@ class Camera:
     def __init__(self):
 
         self.cap = cv2.VideoCapture(
-            Config.CAMERA_INDEX
+            Config.CAMERA_INDEX,
+            cv2.CAP_DSHOW
         )
 
         self.cap.set(

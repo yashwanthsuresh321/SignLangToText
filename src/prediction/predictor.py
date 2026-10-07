@@ -32,7 +32,7 @@ class Predictor:
         # Live Prediction Buffers
         # ==========================================================
 
-        self.window_size = 5
+        self.window_size = 3
 
         self.prediction_buffer = deque(
             maxlen=self.window_size
@@ -259,6 +259,39 @@ class Predictor:
 
         return features
 
+
+    # ==========================================================
+    # Raw Landmark → Feature Vector (Unscaled)
+    # Used by the Dynamic LSTM sequence collector
+    # ==========================================================
+
+    def extract_features(
+        self,
+        landmarks,
+        handedness
+    ):
+        """
+        Returns the raw 64-dimensional feature vector
+        without applying the StandardScaler.
+        """
+        if landmarks is None:
+            raise ValueError("extract_features() received None landmarks")
+        features = []
+
+        for landmark in landmarks:
+            features.extend([
+                landmark.x,
+                landmark.y,
+                landmark.z
+            ])
+
+        if handedness == "Left":
+            features.append(0.0)
+        else:
+            features.append(1.0)
+
+        return np.asarray(features, dtype=np.float32)
+
     # ==========================================================
     # Predict
     # ==========================================================
@@ -269,10 +302,18 @@ class Predictor:
         handedness
     ):
 
-        features = self.prepare_features(
+        raw_features = self.extract_features(
             landmarks,
             handedness
         )
+
+        features = self.scaler.transform(raw_features.reshape(1, -1))
+
+        # Legacy path removed
+        # features = self.prepare_features(
+        #     landmarks,
+        #     handedness
+        # )
 
         probabilities = self.model.predict(
             features,
