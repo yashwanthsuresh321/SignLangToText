@@ -88,19 +88,7 @@ class UI:
         }
         self.header_comp.draw(frame, self.layout.get_rect('header'), header_data)
 
-        # 5. Dataset Panel
-        dataset_data = {
-            'current_label': current_label,
-            'current_count': current_count,
-            'target_count': target_count,
-            'session_count': session_count,
-            'status': status,
-            'progress': progress,
-            'progress_bar_comp': self.progress_bar_comp
-        }
-        self.dataset_comp.draw(frame, self.layout.get_rect('dataset'), dataset_data)
-
-        # 6. Prediction Panel
+        # 5. Prediction Panel
         prediction_data = {
             'prediction': prediction,
             'confidence': prediction_confidence,
@@ -108,26 +96,13 @@ class UI:
         }
         self.prediction_comp.draw(frame, self.layout.get_rect('prediction'), prediction_data)
 
-        # 7. Sentence Panel
+        # 6. Sentence Panel
         sentence_data = {
             'sentence': sentence,
             'letter_added': letter_added,
             'last_added_letter': last_added_letter
         }
         self.sentence_comp.draw(frame, self.layout.get_rect('sentence'), sentence_data)
-
-        # 8. Dynamic Recording Panel
-        dynamic_data = {
-            'label': dynamic_label,
-            'frames': dynamic_frames,
-            'target': dynamic_target,
-            'recording': dynamic_recording,
-            'collected': dynamic_collected,
-            'goal': dynamic_goal,
-            'j_count': dynamic_j_count,
-            'z_count': dynamic_z_count
-        }
-        self.dynamic_comp.draw(frame, self.layout.get_rect('dynamic'), dynamic_data)
 
         # 9. Separators (Obsolete)
         # Separators are no longer drawn in the new dashboard layout.

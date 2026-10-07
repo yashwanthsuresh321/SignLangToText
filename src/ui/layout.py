@@ -54,42 +54,19 @@ class LayoutManager:
         )
 
         # ==========================================================
-        # BOTTOM DYNAMIC PANEL
-        # ==========================================================
-
-        dynamic_width = frame_width - (2 * margin_x)
-
-        dynamic_y = (
-            frame_height
-            - margin_y
-            - Constants.DYNAMIC_PANEL_HEIGHT
-        )
-
-        self.rects["dynamic"] = Rect(
-            x=margin_x,
-            y=dynamic_y,
-            w=dynamic_width,
-            h=Constants.DYNAMIC_PANEL_HEIGHT,
-        )
-
-        # ==========================================================
-        # MIDDLE DASHBOARD ROW
+        # BOTTOM DASHBOARD ROW (Prediction | Sentence)
         # ==========================================================
 
         row_y = (
-            dynamic_y
-            - gap
+            frame_height
+            - margin_y
             - Constants.DATASET_PRED_SENT_HEIGHT
         )
 
         available_width = (
             frame_width
             - (2 * margin_x)
-            - (2 * gap)
-        )
-
-        dataset_width = int(
-            available_width * Constants.DATASET_WIDTH_PCT
+            - gap
         )
 
         prediction_width = int(
@@ -98,32 +75,14 @@ class LayoutManager:
 
         sentence_width = (
             available_width
-            - dataset_width
             - prediction_width
-        )
-
-        # ==========================================================
-        # DATASET CARD
-        # ==========================================================
-
-        dataset_x = margin_x
-
-        self.rects["dataset"] = Rect(
-            x=dataset_x,
-            y=row_y,
-            w=dataset_width,
-            h=Constants.DATASET_PRED_SENT_HEIGHT,
         )
 
         # ==========================================================
         # PREDICTION CARD
         # ==========================================================
 
-        prediction_x = (
-            dataset_x
-            + dataset_width
-            + gap
-        )
+        prediction_x = margin_x
 
         self.rects["prediction"] = Rect(
             x=prediction_x,

@@ -53,9 +53,8 @@ class Constants:
     # Total = 1.00
     # ==========================================================
 
-    DATASET_WIDTH_PCT = 0.25
-    PREDICTION_WIDTH_PCT = 0.25
-    SENTENCE_WIDTH_PCT = 0.50
+    PREDICTION_WIDTH_PCT = 0.30
+    SENTENCE_WIDTH_PCT = 0.70
 
     # ==========================================================
     # CARD RADIUS
