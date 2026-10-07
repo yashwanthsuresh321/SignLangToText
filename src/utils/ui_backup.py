@@ -789,8 +789,8 @@ class UI:
 
         frame,
 
-        sentence
-
+        sentence,
+        word_suggestions=None
     ):
 
         h, w = frame.shape[:2]
@@ -827,7 +827,7 @@ class UI:
 
             sentence,
 
-            (x, panel_top + 172),
+            (x, panel_top + 155),
 
             cv2.FONT_HERSHEY_SIMPLEX,
 
@@ -838,7 +838,25 @@ class UI:
             2
 
         )
+        # ----------------------------------------------
+        # Word Suggestions
+        # ----------------------------------------------
 
+        if word_suggestions:
+
+            suggestion_text = "Suggestions : " + "    ".join(
+                word_suggestions
+            )
+
+            cv2.putText(
+                frame,
+                suggestion_text,
+                (x, panel_top + 175),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.52,
+                self.CYAN,
+                2
+            )
         return frame
 
     # ======================================================
@@ -965,7 +983,7 @@ class UI:
         letter_added=False,
 
         last_added_letter="",
-
+        word_suggestions=None,
         current_label="-",
 
         current_count=0,
@@ -1094,8 +1112,8 @@ class UI:
 
             frame,
 
-            sentence
-
+            sentence,
+            word_suggestions
         )
         frame = self.draw_letter_added(
 

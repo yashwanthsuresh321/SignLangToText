@@ -18,6 +18,7 @@ import sys
 import time
 from contextlib import contextmanager, redirect_stderr, redirect_stdout
 
+
 # These must be set before TensorFlow / MediaPipe are imported.
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
@@ -91,10 +92,23 @@ with _silent_native_stderr():
 
     from src.dynamic.sequence_collector import SequenceCollector
     from src.dynamic.sequence_dataset import SequenceDataset
-
+    from src.intelligence.word_predictor import WordPredictor
     from src.sentence.sentence_builder import SentenceBuilder
+    from src.intelligence.auto_corrector import AutoCorrector
+    def get_current_word(sentence):
+        """
+        Extract the unfinished word from the sentence.
+        """
 
+        if not sentence:
+           return ""
 
+        parts = sentence.strip().split()
+
+        if not parts:
+            return ""
+
+        return parts[-1]
 # ==========================================================
 # Dynamic Dataset Configuration
 # ==========================================================
@@ -152,9 +166,10 @@ with redirect_stdout(io.StringIO()):
 resolution = camera.get_resolution()
 
 sentence_builder = SentenceBuilder()
-
+word_predictor = WordPredictor()
 dynamic_collector = SequenceCollector()
 dynamic_dataset = SequenceDataset()
+auto_corrector = AutoCorrector()
 
 # ==========================================================
 # Automatically Load Existing Dynamic Dataset
@@ -196,7 +211,8 @@ last_added_letter = ""
 prediction = "-"
 prediction_confidence = 0.0
 prediction_source = "STATIC"
-
+current_word = ""
+word_suggestions = []
 
 
 
@@ -330,6 +346,34 @@ while camera.is_opened():
                     prediction
                 )
 
+                if (
+                    prediction == "SPACE"
+                    and sentence_builder.is_letter_added()
+                ):
+
+                    corrected_sentence, changed, correction_info = (
+                        auto_corrector.correct_last_word(
+                            sentence
+                        )
+                    )
+
+                    if changed:
+
+                        sentence_builder.sentence = (
+                            corrected_sentence
+                        )
+
+                        sentence = corrected_sentence
+
+                else:
+
+                    sentence = sentence_builder.get_sentence()
+                current_word = get_current_word(sentence)
+
+                word_suggestions = word_predictor.predict(
+                    current_word,
+                    limit=3
+                )
                 hold_progress = (
                     sentence_builder.get_progress()
                 )
@@ -637,6 +681,7 @@ while camera.is_opened():
         dynamic_goal=dynamic_goal,
 
         dynamic_j_count=dynamic_j_count,
+        word_suggestions=word_suggestions,
 
         dynamic_z_count=dynamic_z_count,
 

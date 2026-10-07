@@ -60,6 +60,7 @@ class UI:
         dynamic_recording=False,
         dynamic_collected=0,
         dynamic_goal=150,
+        word_suggestions=None,
         dynamic_j_count=0,
         dynamic_z_count=0
     ):
@@ -100,7 +101,8 @@ class UI:
         sentence_data = {
             'sentence': sentence,
             'letter_added': letter_added,
-            'last_added_letter': last_added_letter
+            'last_added_letter': last_added_letter,
+            'word_suggestions': word_suggestions or []
         }
         self.sentence_comp.draw(frame, self.layout.get_rect('sentence'), sentence_data)
 

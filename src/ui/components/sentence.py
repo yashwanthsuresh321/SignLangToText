@@ -26,7 +26,8 @@ class SentenceComponent:
         sentence = data.get("sentence", "")
         letter_added = data.get("letter_added", False)
         last_added_letter = data.get("last_added_letter", "")
-
+        suggestions = data.get('word_suggestions', [])
+        
         # ---------------------------------------------------------
         # Empty State
         # ---------------------------------------------------------
@@ -81,7 +82,26 @@ class SentenceComponent:
             thickness=Theme.THICKNESS_NORMAL,
             font=Theme.FONT_PRIMARY,
         )
+        # ---------------------------------------------------------
+        # Word Suggestions
+        # ---------------------------------------------------------
 
+        if suggestions:
+
+            suggestion_text = "Suggestions: " + "   ".join(
+                suggestions
+            )
+
+            Theme.draw_text(
+                frame,
+                suggestion_text,
+                left,
+                rect.y + 112,
+                scale=0.55,
+                color=Theme.WHITE,
+                thickness=Theme.THICKNESS_NORMAL,
+                font=Theme.FONT_SECONDARY,
+            )
         # ---------------------------------------------------------
         # Last Added Letter
         # ---------------------------------------------------------

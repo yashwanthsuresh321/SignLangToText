@@ -40,8 +40,16 @@ class HybridPredictor:
         dynamic_threshold=0.70,
         static_threshold=0.75,
         motion_threshold=0.006,
+        motion_frame_threshold=0.004,
+        minimum_motion_frames=5,
+        dynamic_confirmation_frames=4,
     ):
+        self.dynamic_confirmation_frames = (
+            dynamic_confirmation_frames
+        )
 
+        self.pending_dynamic_prediction = None
+        self.pending_dynamic_count = 0
         self.static_predictor = Predictor(
             model_path=model_path,
             scaler_path=scaler_path,
@@ -65,6 +73,8 @@ class HybridPredictor:
         # Average frame-to-frame landmark movement required before
         # J/Z is allowed to override the static recognizer.
         self.motion_threshold = motion_threshold
+        self.motion_frame_threshold = motion_frame_threshold
+        self.minimum_motion_frames = minimum_motion_frames
 
     # ======================================================
     # Reset
@@ -75,7 +85,8 @@ class HybridPredictor:
         self.static_predictor.reset_history()
         self.dynamic_predictor.reset()
         self.motion_history.clear()
-
+        self.pending_dynamic_prediction = None
+        self.pending_dynamic_count = 0
     # ======================================================
     # Dynamic Buffer Progress
     # ======================================================
@@ -131,7 +142,133 @@ class HybridPredictor:
         )
 
         return motion_score
+    def _calculate_sustained_motion(self):
+        """
+        Determine whether the current sequence contains
+        sustained movement.
 
+        This is intentionally different from simply calculating
+        average motion.
+
+        A static gesture may contain a short burst of movement
+        while the user is forming the hand shape.
+
+        J and Z, however, contain movement across multiple
+        consecutive frames.
+
+        Returns
+        -------
+        tuple
+        (
+            motion_frame_count,
+            maximum_consecutive_motion_frames,
+            sustained_motion
+        )
+        """
+
+        if len(self.motion_history) < 2:
+           return 0, 0, False
+
+        sequence = np.asarray(
+            self.motion_history,
+            dtype=np.float32
+        )
+
+        landmark_sequence = sequence[:, :63]
+
+        frame_differences = np.diff(
+            landmark_sequence,
+            axis=0
+        )
+
+        # Calculate average landmark movement for each
+        # frame-to-frame transition.
+        frame_motion = np.mean(
+            np.abs(frame_differences),
+            axis=1
+        )
+
+        # Frames that contain meaningful movement.
+        moving_frames = (
+            frame_motion >= self.motion_frame_threshold
+        )
+
+        motion_frame_count = int(
+            np.sum(moving_frames)
+        )
+
+        # Find the longest consecutive run of moving frames.
+        maximum_consecutive = 0
+        current_consecutive = 0
+
+        for moving in moving_frames:
+
+            if moving:
+
+                current_consecutive += 1
+
+                maximum_consecutive = max(
+                    maximum_consecutive,
+                    current_consecutive
+                )
+
+            else:
+
+                current_consecutive = 0
+
+        sustained_motion = (
+            motion_frame_count >= self.minimum_motion_frames
+            and
+            maximum_consecutive >= 3
+        )
+
+        return (
+            motion_frame_count,
+            maximum_consecutive,
+            sustained_motion
+        )
+    def _confirm_dynamic_prediction(
+        self,
+        prediction,
+    ):
+        """
+        Require multiple consecutive identical J/Z predictions
+        before allowing a dynamic prediction to reach the UI
+        and SentenceBuilder.
+        """
+
+        if prediction not in ("J", "Z"):
+
+            self.pending_dynamic_prediction = None
+            self.pending_dynamic_count = 0
+
+            return False
+
+        # First dynamic prediction.
+        if self.pending_dynamic_prediction is None:
+
+            self.pending_dynamic_prediction = prediction
+            self.pending_dynamic_count = 1
+
+            return False
+
+        # Same prediction continues.
+        if self.pending_dynamic_prediction == prediction:
+
+            self.pending_dynamic_count += 1
+
+        else:
+
+            # Prediction changed from J -> Z or Z -> J.
+            self.pending_dynamic_prediction = prediction
+            self.pending_dynamic_count = 1
+
+            return False
+
+        return (
+            self.pending_dynamic_count
+            >= self.dynamic_confirmation_frames
+        )
     # ======================================================
     # Predict
     # ======================================================
@@ -216,9 +353,15 @@ class HybridPredictor:
         # 20-frame sequence clearly contains a gesture.
         #
         motion_score = self._calculate_sequence_motion()
-        motion_detected = motion_score >= self.motion_threshold
+        (
+            motion_frame_count,
+            consecutive_motion_frames,
+            sustained_motion,
+        ) = self._calculate_sustained_motion()
 
-        if not motion_detected:
+        if not sustained_motion:
+            self.pending_dynamic_prediction = None
+            self.pending_dynamic_count = 0
 
             return {
 
@@ -236,6 +379,11 @@ class HybridPredictor:
 
                 "motion_detected": False,
 
+                "motion_frame_count": motion_frame_count,
+
+                "consecutive_motion_frames": (
+                    consecutive_motion_frames
+                ),
             }
 
         # ------------------------------------------
@@ -283,9 +431,67 @@ class HybridPredictor:
             and
 
             dynamic_confidence >= self.dynamic_threshold
+            and
+            sustained_motion
 
         ):
+            confirmed = self._confirm_dynamic_prediction(
+                dynamic_prediction
+            )
 
+            if confirmed:
+
+                return {
+
+                    "prediction": dynamic_prediction,
+
+                    "confidence": dynamic_confidence,
+
+                    "source": "DYNAMIC",
+
+                    "dynamic_ready": True,
+
+                    "dynamic_progress": 1.0,
+
+                    "motion_score": motion_score,
+
+                    "motion_detected": True,
+
+                    "motion_frame_count": motion_frame_count,
+
+                    "consecutive_motion_frames": (
+                        consecutive_motion_frames
+                    ),
+
+                }
+
+            # J/Z has not been confirmed yet.
+            # IMPORTANT:
+            # Return the static prediction instead of the
+            # temporary J/Z prediction.
+            return {
+
+                "prediction": static_prediction,
+
+                "confidence": static_confidence,
+
+                "source": "STATIC",
+
+                "dynamic_ready": True,
+
+                "dynamic_progress": 1.0,
+
+                "motion_score": motion_score,
+
+                "motion_detected": True,
+
+                "motion_frame_count": motion_frame_count,
+
+                "consecutive_motion_frames": (
+                    consecutive_motion_frames
+                ),
+
+            }
             return {
 
                 "prediction": dynamic_prediction,
