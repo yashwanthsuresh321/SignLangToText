@@ -239,7 +239,7 @@ class AutoCorrector:
             "tahnk": "thank",
 
             "frmo": "from",
-            "form": "from",
+            "fmro": "from",
 
             "hte": "the",
             "teh": "the",

@@ -15,7 +15,7 @@ class Keyboard:
 
         self.previous_key = None
 
-    def get_event(self):
+    def get_event(self,suggestion_mode=False):
 
         key = cv2.waitKey(1) & 0xFF
         # -------------------------
@@ -41,7 +41,17 @@ class Keyboard:
             self.previous_key = None
 
             return None
+        # -------------------------
+        # ENTER = Read Aloud
+        # -------------------------
 
+        if key == 13:
+
+            self.previous_key = None
+
+            return {
+                "type": "SPEAK"
+            }
         try:
 
             key = chr(key).lower()
@@ -80,6 +90,38 @@ class Keyboard:
     # Command Labels
     # -------------------------
 
+    # -------------------------
+    # Suggestion Selection
+    # -------------------------
+
+        if suggestion_mode:
+
+            if key == "1":
+
+                return {
+                    "type": "SUGGESTION_SELECT",
+                    "index": 0
+                }
+
+            if key == "2":
+
+                return {
+                    "type": "SUGGESTION_SELECT",
+                    "index": 1
+                }
+
+            if key == "3":
+
+                return {
+                    "type": "SUGGESTION_SELECT",
+                    "index": 2
+                }
+
+
+    # -------------------------
+    # Command Labels
+    # -------------------------
+
         if key == "1":
 
             return {
@@ -109,7 +151,6 @@ class Keyboard:
                 "key": "CLEAR"
 
             }
-
 
         # -------------------------
         # Dynamic Recording

@@ -41,8 +41,8 @@ class HybridPredictor:
         static_threshold=0.75,
         motion_threshold=0.006,
         motion_frame_threshold=0.004,
-        minimum_motion_frames=5,
-        dynamic_confirmation_frames=4,
+        minimum_motion_frames=7,
+        dynamic_confirmation_frames=6,
     ):
         self.dynamic_confirmation_frames = (
             dynamic_confirmation_frames

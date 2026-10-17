@@ -27,7 +27,7 @@ class PredictionComponent:
         prediction = str(data.get("prediction", "-"))
         confidence = float(data.get("confidence", 0.0))
         hold_progress = max(0.0, min(1.0, float(data.get("hold_progress", 0.0))))
-        source = data.get("source", "STATIC")
+        
 
         pad = Constants.PADDING
 
@@ -116,65 +116,12 @@ class PredictionComponent:
             cv2.LINE_AA,
         )
 
-        # ---------------------------------------------------------
-        # Source Badge
-        # ---------------------------------------------------------
-
-        badge_color = (
-            Theme.SUCCESS
-            if source.upper() == "DYNAMIC"
-            else Theme.ACCENT
-        )
-
-        badge_text = source.upper()
-
-        (badge_w, badge_h), _ = cv2.getTextSize(
-            badge_text,
-            Theme.FONT_SECONDARY,
-            0.45,
-            Theme.THICKNESS_NORMAL,
-        )
-
-        badge_padding_x = 10
-        badge_padding_y = 5
-
-        badge_total_w = badge_w + badge_padding_x * 2
-        badge_total_h = badge_h + badge_padding_y * 2
-
-        badge_x = center_x - badge_total_w // 2
-        badge_y = conf_y + 12
-
-        Theme.draw_rounded_rect(
-            frame,
-            (badge_x, badge_y),
-            (
-                badge_x + badge_total_w,
-                badge_y + badge_total_h,
-            ),
-            badge_color,
-            -1,
-            8,
-        )
-
-        cv2.putText(
-            frame,
-            badge_text,
-            (
-                badge_x + badge_padding_x,
-                badge_y + badge_total_h - badge_padding_y - 2,
-            ),
-            Theme.FONT_SECONDARY,
-            0.45,
-            Theme.BLACK,
-            Theme.THICKNESS_NORMAL,
-            cv2.LINE_AA,
-        )
-
+        
         # ---------------------------------------------------------
         # Hold Label
         # ---------------------------------------------------------
 
-        hold_label_y = rect.y + rect.h - 34
+        hold_label_y = rect.y + rect.h - 55
 
         cv2.putText(
             frame,

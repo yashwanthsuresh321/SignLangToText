@@ -89,7 +89,8 @@ class SentenceComponent:
         if suggestions:
 
             suggestion_text = "Suggestions: " + "   ".join(
-                suggestions
+                f"[{i + 1}] {word}"
+                for i, word in enumerate(suggestions)
             )
 
             Theme.draw_text(

@@ -93,7 +93,37 @@ class SentenceBuilder:
         if len(self.sentence):
 
             self.sentence = self.sentence[:-1]
+    # ==========================================================
+    # Replace Current Word
+    # ==========================================================
 
+    def replace_current_word(self, word):
+
+        if not word:
+            return self.sentence
+
+        # Remove trailing spaces temporarily
+        sentence = self.sentence.rstrip()
+
+        # If there is no existing sentence
+        if not sentence:
+            self.sentence = word
+            return self.sentence
+
+        # Split sentence into words
+        parts = sentence.split()
+
+        if not parts:
+            self.sentence = word
+            return self.sentence
+
+        # Replace the current/last word
+        parts[-1] = word
+
+        # Rebuild sentence
+        self.sentence = " ".join(parts)
+
+        return self.sentence
     # ==========================================================
     # Space
     # ==========================================================

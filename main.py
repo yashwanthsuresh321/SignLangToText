@@ -89,7 +89,7 @@ with _silent_native_stderr():
     from src.detection.hand_drawer import HandDrawer
 
     from src.prediction.hybrid_predictor import HybridPredictor
-
+    from src.speech.speech_engine import SpeechEngine
     from src.dynamic.sequence_collector import SequenceCollector
     from src.dynamic.sequence_dataset import SequenceDataset
     from src.intelligence.word_predictor import WordPredictor
@@ -170,7 +170,7 @@ word_predictor = WordPredictor()
 dynamic_collector = SequenceCollector()
 dynamic_dataset = SequenceDataset()
 auto_corrector = AutoCorrector()
-
+speech_engine = SpeechEngine()
 # ==========================================================
 # Automatically Load Existing Dynamic Dataset
 # ==========================================================
@@ -405,7 +405,7 @@ while camera.is_opened():
     # Keyboard Events
     # ==========================================================
 
-    event = keyboard.get_event()
+    event = keyboard.get_event( suggestion_mode=bool(word_suggestions))
 
     if event is not None:
 
@@ -416,7 +416,34 @@ while camera.is_opened():
         if event["type"] == "QUIT":
 
             break
+        # ------------------------------------------------------
+        # Word Suggestion Selection
+        # ------------------------------------------------------
 
+        elif event["type"] == "SUGGESTION_SELECT":
+
+            index = event["index"]
+
+            if 0 <= index < len(word_suggestions):
+
+                selected_word = word_suggestions[index]
+
+                sentence = sentence_builder.replace_current_word(
+                    selected_word
+                )
+
+                current_word = get_current_word(sentence)
+
+                word_suggestions = word_predictor.predict(
+                    current_word,
+                    limit=3
+                )
+        elif event["type"] == "SPEAK":
+
+            if sentence.strip():
+
+                speech_engine.speak(sentence)
+                
         # ------------------------------------------------------
         # Static Dataset Collection
         #
